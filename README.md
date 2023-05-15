@@ -1,4 +1,4 @@
-# JSONFast 1.0.6
+# JSONFast 1.0.7
 
 #### （1）介绍
 JSON序列化工具，无第三方依赖，可单独复制[JSONFast.cs](https://github.com/majorworld/JsonFast/blob/main/JsonFast.cs)类文件使用，仅900行代码
@@ -92,13 +92,26 @@ string json = str.JsonFrom().JsonTo();
 Console.WriteLine(json);// "{\"Name\":\"你好\"}";
 ```
 
+##### 8、添加动态获取字段
+```cs
+//第二个参数，传入空格分隔的字符串，直接获取到tgt字段的内容
+string result = "{\"type\":\"ZH_CN2EN\",\"errorCode\":0,\"elapsedTime\":0,\"translateResult\":[[{\"src\":\"有人在家吗\",\"tgt\":\"Is anyone home?\"}]]}";
+var tgt= JsonFast.PickData(result, "translateResult 0 0 tgt");
+
+//获取到数组类型元素的数量，然后按该数量循环，使用PickData依次获取数组里所有元素
+string json = "{\"Student\":[{\"Name\":\"Lucy\"},{\"Name\":\"Jack\"},{\"Name\":\"Tom\"}]}";
+int count = JsonFast.ArrayCount(json, "Student");
+```
+
 
 #### （5）更新日志
 
 
 | 更新日志 |版本|
 |------------|--|
-| 2022-01-03 |1.0.6|
+| 2023-05-15 |1.0.7|
+| 1、添加动态获取字段，PickData和ArrayCount方法||
+| 2023-01-03 |1.0.6|
 | 1、优化代码结构，防止私有拓展方法全局污染||
 | 2022-12-29 |1.0.5|
 | 1、添加对unicode字符串的解析||
