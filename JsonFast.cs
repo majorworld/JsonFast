@@ -4,10 +4,7 @@
 //  Gitee源代码仓库：https://gitee.com/majorworld
 //  交流QQ群：1157159110
 //  感谢您的下载和使用，请保留此说明
-//  当前版本为1.0.6，最后更新时间2022-01-03
-//  结构说明
-//  JsonDecode和JsonEncode类和核心类，不需要修改
-//  JsonChange类为类型转换类，有不支持的数据类型可以在此类拓展
+//  当前版本为1.0.7最后更新时间2023-05-15
 //------------------------------------------------------------------------------
 using System.Collections;
 using System.Collections.Concurrent;
@@ -21,6 +18,10 @@ using System.Text;
 
 namespace System
 {
+    /// <summary>
+    /// 过滤不需要序列化的字段
+    /// </summary>
+    public class FastIgnore : Attribute { }
     /// <summary>
     /// Json高速转换
     /// </summary>
@@ -88,6 +89,74 @@ namespace System
             StringBuilder sb = new StringBuilder();
             t.CodeObject(sb, timeFormat ?? TimeFormat);
             return sb.ToString();
+        }
+        #endregion
+
+        #region 动态获取
+        /// <summary>
+        /// 获取数组类型元素的数量，方便PickData方法循环提取数组里所有元素
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="array"></param>
+        /// <returns></returns>
+        public static int ArrayCount(string json, string array = "")
+        {
+            if (string.IsNullOrEmpty(array.Trim(' ')))
+            {
+                return json.JsonFrom<List<object>>().Count();
+            }
+            var result = PickData(json, array);
+            if (result is IList arr)
+            {
+                return arr.Count;
+            }
+            return 0;
+        }
+        /// <summary>
+        /// 获取字段，array参数用空格分隔，数字为索引，非数字为字段
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="array"></param>
+        /// <returns></returns>
+        public static object PickData(string json, string array)
+        {
+            var arr = array.Trim(' ').Split(' ');
+            if (arr.Length > 0)
+            {
+                if (int.TryParse(arr[0], out int _))
+                {
+                    return PickData(json.JsonFrom<List<object>>(), array.Trim(' ').Split(' '), 0);
+                }
+            }
+            return PickData(json.JsonFrom(), array.Trim(' ').Split(' '), 0);
+        }
+        static object PickData(object json, string[] array, int index = 0)
+        {
+            if (index >= array.Length)
+            {
+                return json;
+            }
+            var key = array[index];
+            if (int.TryParse(key, out int pos))
+            {
+                if (json is List<object> list)
+                {
+                    index++;
+                    return PickData(list[pos], array, index);
+                }
+            }
+            else
+            {
+                if (json is IDictionary<string, object> dict)
+                {
+                    if (dict.TryGetValue(key, out object value))
+                    {
+                        index++;
+                        return PickData(value, array, index);
+                    }
+                }
+            }
+            return null;
         }
         #endregion
 
@@ -808,8 +877,4 @@ namespace System
         #endregion
     }
 
-    /// <summary>
-    /// 过滤不需要序列化的字段
-    /// </summary>
-    public class FastIgnore : Attribute { }
 }
